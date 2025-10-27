@@ -34,6 +34,14 @@ export interface UpdateUserRequest {
   roleId?: string;
 }
 
+export interface GetUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface UserResponse {
   id: string;
   email: string;

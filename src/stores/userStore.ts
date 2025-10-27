@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { userService } from '../services/userService';
-import { type User, type CreateUserRequest, type UpdateUserRequest } from '../types/user';
+import { type User, type CreateUserRequest, type UpdateUserRequest, type GetUsersParams } from '../types/user';
+import { type PaginationMeta } from '../types/pagination';
 
 interface UserState {
   users: User[];
+  pagination: PaginationMeta | null;
   loading: boolean;
   error: string | null;
   selectedUser: User | null;
@@ -11,7 +13,7 @@ interface UserState {
 
 interface UserActions {
   // Data fetching
-  fetchUsers: () => Promise<void>;
+  fetchUsers: (params?: GetUsersParams) => Promise<void>;
   fetchUserById: (id: string) => Promise<void>;
   
   // CRUD operations
@@ -28,19 +30,24 @@ interface UserActions {
 
 type UserStore = UserState & UserActions;
 
-export const useUserStore = create<UserStore>((set, get) => ({
+export const useUserStore = create<UserStore>((set) => ({
   // Initial state
   users: [],
+  pagination: null,
   loading: false,
   error: null,
   selectedUser: null,
 
   // Actions
-  fetchUsers: async () => {
+  fetchUsers: async (params?: GetUsersParams) => {
     set({ loading: true, error: null });
     try {
-      const users = await userService.getAllUsers();
-      set({ users, loading: false });
+      const response = await userService.getAllUsers(params);
+      set({ 
+        users: response.data, 
+        pagination: response.meta,
+        loading: false 
+      });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to fetch users',

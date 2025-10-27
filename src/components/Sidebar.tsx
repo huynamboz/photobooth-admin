@@ -24,7 +24,7 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Users', path: '/users' },
-    { icon: Camera, label: 'Photos', path: '/photos' },
+    { icon: Camera, label: 'Asset Management', path: '/photos' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];

@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -26,15 +26,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useUserStore } from "@/stores/userStore";
-import { type User } from "@/types/user";
+import { type User, type CreateUserRequest, type UpdateUserRequest, type GetUsersParams } from "@/types/user";
 import Layout from "../components/Layout";
 import UserForm from "../components/UserForm";
+import PaginationWrapper from "../components/PaginationWrapper";
 import { Plus, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 function UsersPage() {
   const {
     users,
+    pagination,
     loading,
     error,
     fetchUsers,
@@ -49,10 +51,22 @@ function UsersPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
+
+  const loadUsers = useCallback(async () => {
+    const params: GetUsersParams = {
+      page: currentPage,
+      limit: pageSize,
+      search: searchTerm || undefined,
+    };
+    await fetchUsers(params);
+  }, [currentPage, pageSize, searchTerm, fetchUsers]);
+  
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    loadUsers();
+  }, [loadUsers]);
 
   useEffect(() => {
     if (error) {
@@ -61,21 +75,28 @@ function UsersPage() {
     }
   }, [error, clearError]);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
-  const handleCreateUser = async (userData: any) => {
-    await createUser(userData);
-    setIsCreateOpen(false);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
-  const handleEditUser = async (userData: any) => {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleCreateUser = async (userData: CreateUserRequest | UpdateUserRequest) => {
+    await createUser(userData as CreateUserRequest);
+    setIsCreateOpen(false);
+    loadUsers(); // Refresh the list
+  };
+
+  const handleEditUser = async (userData: CreateUserRequest | UpdateUserRequest) => {
     if (selectedUser) {
-      await updateUser(selectedUser.id, userData);
+      await updateUser(selectedUser.id, userData as UpdateUserRequest);
       setIsEditOpen(false);
       setSelectedUser(null);
+      loadUsers(); // Refresh the list
     }
   };
 
@@ -84,6 +105,7 @@ function UsersPage() {
       await deleteUser(selectedUser.id);
       setIsDeleteOpen(false);
       setSelectedUser(null);
+      loadUsers(); // Refresh the list
     }
   };
 
@@ -115,12 +137,12 @@ function UsersPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="pl-10"
+                  />
               </div>
               <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
@@ -143,24 +165,24 @@ function UsersPage() {
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                          <span className="ml-2">Loading users...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                        {searchTerm ? 'No users found matching your search.' : 'No users found.'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                              <span className="ml-2">Loading users...</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            {searchTerm ? 'No users found matching your search.' : 'No users found.'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -199,10 +221,20 @@ function UsersPage() {
                     ))
                   )}
                 </TableBody>
-              </Table>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="px-6 py-4 border-t">
+                  <PaginationWrapper
+                    pagination={pagination}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        </div>
 
         {/* Create User Dialog */}
         <UserForm

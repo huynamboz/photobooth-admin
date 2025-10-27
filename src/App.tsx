@@ -4,7 +4,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
-import PhotosPage from './pages/PhotosPage';
+import AssetsPage from './pages/AssetsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,7 +37,7 @@ export function App() {
             path="/photos" 
             element={
               <ProtectedRoute>
-                <PhotosPage />
+                <AssetsPage />
               </ProtectedRoute>
             } 
           />
