@@ -1,106 +1,212 @@
-import { useAuth } from "@/hooks/useAuth";
-import Layout from "../components/Layout";
+import { useEffect, useCallback } from 'react';
+import { useStatsStore } from '@/stores/statsStore';
+import { useSessionStore } from '@/stores/sessionStore';
+import Layout from '../components/Layout';
+import StatCard from '../components/dashboard/StatCard';
+import ChartsSection from '../components/dashboard/ChartsSection';
+import RecentActivity from '../components/dashboard/RecentActivity';
+import { 
+  Camera, 
+  Users, 
+  Activity, 
+  Image as ImageIcon,
+  RefreshCw,
+  AlertTriangle
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 function DashboardPage() {
-  const { user } = useAuth();
-  
+  const {
+    systemStats,
+    realtimeStats,
+    sessionsChartData,
+    utilizationData,
+    loading,
+    error,
+    fetchSystemStats,
+    fetchRealtimeStats,
+    fetchSessionsChartData,
+    fetchUtilizationData,
+    cleanupExpiredSessions,
+    clearError
+  } = useStatsStore();
+
+  const {
+    sessions,
+    fetchSessions
+  } = useSessionStore();
+
+  const loadDashboardData = useCallback(async () => {
+    try {
+      await Promise.all([
+        fetchSystemStats(),
+        fetchRealtimeStats(),
+        fetchSessionsChartData(7),
+        fetchUtilizationData(),
+        fetchSessions({ limit: 10, page: 1 })
+      ]);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    }
+  }, [fetchSystemStats, fetchRealtimeStats, fetchSessionsChartData, fetchUtilizationData, fetchSessions]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      clearError();
+    }
+  }, [error, clearError]);
+
+  const handleRefresh = () => {
+    loadDashboardData();
+    toast.success('Dashboard refreshed');
+  };
+
+  const handleCleanup = async () => {
+    try {
+      const cleanedCount = await cleanupExpiredSessions();
+      toast.success(`Cleaned up ${cleanedCount} expired sessions`);
+      loadDashboardData(); // Refresh data
+    } catch (error) {
+      toast.error('Failed to cleanup expired sessions');
+    }
+  };
+
   return (
     <Layout>
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
+          {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Dashboard
-            </h1>
-            <p className="text-gray-600">
-              Welcome back, {user?.name}! Here's what's happening with your PhotoBooth.
-            </p>
-          </div>
-          
-          {/* Welcome Card */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex">
-              <div className="shrink-0">
-                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  Dashboard
+                </h1>
+                <p className="text-gray-600">
+                  Overview of your PhotoBooth system
+                </p>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
-                  Welcome to PhotoBooth Admin!
-                </h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>
-                    Hello <strong>{user?.name}</strong>! You are successfully logged in.
-                  </p>
-                </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCleanup}
+                  disabled={loading}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Cleanup Expired
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
               </div>
             </div>
           </div>
-          
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Total Users
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        -
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            <StatCard
+              title="Total Photobooths"
+              value={systemStats?.photobooths.total || 0}
+              icon={Camera}
+              color="info"
+              subtitle={`${systemStats?.photobooths.available || 0} available`}
+            />
+            <StatCard
+              title="Active Sessions"
+              value={systemStats?.sessions.active || 0}
+              icon={Activity}
+              color="warning"
+              subtitle={`${systemStats?.sessions.completed || 0} completed today`}
+            />
+            <StatCard
+              title="Total Photos"
+              value={systemStats?.photos.total || 0}
+              icon={ImageIcon}
+              color="success"
+              subtitle={`${systemStats?.photos.processed || 0} processed`}
+            />
+            <StatCard
+              title="System Uptime"
+              value={realtimeStats?.systemUptime ? `${Math.floor(realtimeStats.systemUptime / 3600)}h` : '0h'}
+              icon={Users}
+              color="default"
+              subtitle={realtimeStats?.lastUpdated ? `Updated ${new Date(realtimeStats.lastUpdated).toLocaleTimeString()}` : ''}
+            />
+          </div>
+
+          {/* Charts Section */}
+          <div className="mb-6">
+            <ChartsSection
+              sessionsChartData={sessionsChartData}
+              utilizationData={utilizationData}
+              loading={loading}
+            />
+          </div>
+
+          {/* Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <RecentActivity
+                sessions={sessions}
+                loading={loading}
+              />
             </div>
             
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+            {/* Quick Stats */}
+            <div className="space-y-6">
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Available Photobooths</span>
+                    <span className="text-sm font-medium">{systemStats?.photobooths.available || 0}</span>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Total Photos
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        -
-                      </dd>
-                    </dl>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Busy Photobooths</span>
+                    <span className="text-sm font-medium">{systemStats?.photobooths.busy || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Maintenance</span>
+                    <span className="text-sm font-medium">{systemStats?.photobooths.maintenance || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Offline</span>
+                    <span className="text-sm font-medium">{systemStats?.photobooths.offline || 0}</span>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Session Status</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Pending</span>
+                    <span className="text-sm font-medium">{systemStats?.sessions.pending || 0}</span>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Sessions Today
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        -
-                      </dd>
-                    </dl>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Active</span>
+                    <span className="text-sm font-medium">{systemStats?.sessions.active || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Completed</span>
+                    <span className="text-sm font-medium">{systemStats?.sessions.completed || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Cancelled</span>
+                    <span className="text-sm font-medium">{systemStats?.sessions.cancelled || 0}</span>
                   </div>
                 </div>
               </div>

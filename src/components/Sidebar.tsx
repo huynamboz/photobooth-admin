@@ -8,7 +8,10 @@ import {
   Settings, 
   BarChart3, 
   LogOut, 
-  X
+  X,
+  Monitor,
+  Clock,
+  Image as ImageIcon
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,6 +28,9 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Camera, label: 'Asset Management', path: '/photos' },
+    { icon: Monitor, label: 'Photobooths', path: '/photobooths' },
+    { icon: Clock, label: 'Sessions', path: '/sessions' },
+    { icon: ImageIcon, label: 'Photos', path: '/photos-management' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
