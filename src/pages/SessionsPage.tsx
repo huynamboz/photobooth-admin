@@ -5,10 +5,12 @@ import SessionForm from "../components/session/SessionForm";
 import SessionFiltersComponent from "../components/session/SessionFilters";
 import PhotoUpload from "../components/session/PhotoUpload";
 import SessionDetail from "../components/session/SessionDetail";
+import FilterSelectorDialog from "../components/session/FilterSelectorDialog";
 import PaginationWrapper from "../components/PaginationWrapper";
 import { useSessionStore } from "@/stores/sessionStore";
 import { usePhotoboothStore } from "@/stores/photoboothStore";
 import { type Session, type SessionStatus, type CreateSessionRequest } from "@/types/session";
+import { type Asset } from "@/types/asset";
 import { Button } from "@/components/ui/button";
 import { Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +32,8 @@ function SessionsPage() {
     uploadPhoto,
     clearSessionFromPhotobooth,
     startCapture,
+    addFilter,
+    removeFilter,
     setFilters,
     clearFilters,
     clearError
@@ -43,6 +47,7 @@ function SessionsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
@@ -169,6 +174,36 @@ function SessionsPage() {
     setSelectedSession(null);
   };
 
+  const handleChangeFilter = (session: Session) => {
+    setSelectedSession(session);
+    setIsFilterDialogOpen(true);
+  };
+
+  const handleFilterSelect = async (filter: Asset) => {
+    if (!selectedSession) return;
+    
+    const isFilterInSession = selectedSession.filterIds?.includes(filter.id) || false;
+    
+    try {
+      if (isFilterInSession) {
+        await removeFilter(selectedSession.id, filter.id);
+        toast.success(`Filter "${filter.filterType || filter.id}" removed successfully`);
+      } else {
+        await addFilter(selectedSession.id, filter.id);
+        toast.success(`Filter "${filter.filterType || filter.id}" added successfully`);
+      }
+      setIsFilterDialogOpen(false);
+      setSelectedSession(null);
+      loadSessions(); // Refresh sessions list
+    } catch (error) {
+      toast.error(isFilterInSession ? 'Failed to remove filter' : 'Failed to add filter');
+    }
+  };
+
+  const handleFilterDialogClose = () => {
+    setIsFilterDialogOpen(false);
+    setSelectedSession(null);
+  };
 
   const handleCreate = () => {
     setIsFormOpen(true);
@@ -305,6 +340,7 @@ function SessionsPage() {
                 onUploadPhoto={handleUploadPhoto}
                 onClearSession={handleClearSession}
                 onStartCapture={handleStartCapture}
+                onChangeFilter={handleChangeFilter}
               />
 
               {/* Pagination */}
@@ -340,6 +376,15 @@ function SessionsPage() {
           <SessionDetail
             isOpen={isDetailOpen}
             onClose={handleDetailClose}
+            session={selectedSession}
+            onFilterChanged={loadSessions}
+          />
+
+          {/* Filter Selector Dialog */}
+          <FilterSelectorDialog
+            isOpen={isFilterDialogOpen}
+            onClose={handleFilterDialogClose}
+            onSelectFilter={handleFilterSelect}
             session={selectedSession}
           />
         </div>

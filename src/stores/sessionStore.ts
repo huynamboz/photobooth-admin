@@ -35,6 +35,8 @@ interface SessionActions {
   uploadPhoto: (sessionId: string, file: File, caption?: string) => Promise<void>;
   clearSessionFromPhotobooth: (photoboothId: string) => Promise<void>;
   startCapture: (sessionId: string) => Promise<void>;
+  addFilter: (sessionId: string, filterId: string) => Promise<void>;
+  removeFilter: (sessionId: string, filterId: string) => Promise<void>;
   
   
   // Filters and UI
@@ -254,6 +256,42 @@ export const useSessionStore = create<SessionStore>((set) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to start capture',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  addFilter: async (sessionId: string, filterId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedSession = await sessionService.addFilter(sessionId, filterId);
+      set(state => ({
+        sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s),
+        selectedSession: state.selectedSession?.id === sessionId ? updatedSession : state.selectedSession,
+        loading: false
+      }));
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to add filter',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  removeFilter: async (sessionId: string, filterId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedSession = await sessionService.removeFilter(sessionId, filterId);
+      set(state => ({
+        sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s),
+        selectedSession: state.selectedSession?.id === sessionId ? updatedSession : state.selectedSession,
+        loading: false
+      }));
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to remove filter',
         loading: false 
       });
       throw error;

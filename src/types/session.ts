@@ -15,6 +15,8 @@ export interface Session {
     name: string;
     location?: string;
   };
+  filterId?: string;
+  filterIds?: string[];
   photos: Photo[];
   photoCount: number;
   maxPhotos: number;

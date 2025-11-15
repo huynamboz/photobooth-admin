@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type Session } from "@/types/session";
+import { type Asset } from "@/types/asset";
+import FilterSelectorDialog from "./FilterSelectorDialog";
 import { 
   Camera, 
   User, 
@@ -12,7 +14,8 @@ import {
   Calendar, 
   Image as ImageIcon,
   Download,
-  Eye
+  Eye,
+  Palette
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,10 +23,12 @@ interface SessionDetailProps {
   isOpen: boolean;
   onClose: () => void;
   session: Session | null;
+  onFilterChanged?: () => void;
 }
 
-function SessionDetail({ isOpen, onClose, session }: SessionDetailProps) {
+function SessionDetail({ isOpen, onClose, session, onFilterChanged }: SessionDetailProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -93,6 +98,28 @@ function SessionDetail({ isOpen, onClose, session }: SessionDetailProps) {
 
   const handleViewImage = (imageUrl: string) => {
     setSelectedImage(imageUrl);
+  };
+
+  const handleSelectFilter = async (filter: Asset) => {
+    if (!session) return;
+    
+    const isFilterInSession = session.filterIds?.includes(filter.id) || false;
+    
+    try {
+      const { sessionService } = await import('@/services/sessionService');
+      if (isFilterInSession) {
+        await sessionService.removeFilter(session.id, filter.id);
+        toast.success(`Filter "${filter.filterType || filter.id}" removed successfully`);
+      } else {
+        await sessionService.addFilter(session.id, filter.id);
+        toast.success(`Filter "${filter.filterType || filter.id}" added successfully`);
+      }
+      if (onFilterChanged) {
+        onFilterChanged();
+      }
+    } catch {
+      toast.error(isFilterInSession ? 'Failed to remove filter' : 'Failed to add filter');
+    }
   };
 
   if (!session) return null;
@@ -287,7 +314,15 @@ function SessionDetail({ isOpen, onClose, session }: SessionDetailProps) {
             </Card>
           </div>
 
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsFilterDialogOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <Palette className="h-4 w-4" />
+              <span>Change Filter</span>
+            </Button>
             <Button onClick={onClose}>
               Close
             </Button>
@@ -314,6 +349,14 @@ function SessionDetail({ isOpen, onClose, session }: SessionDetailProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Filter Selector Dialog */}
+      <FilterSelectorDialog
+        isOpen={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+        onSelectFilter={handleSelectFilter}
+        session={session}
+      />
     </>
   );
 }

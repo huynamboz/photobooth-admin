@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { type Session, type SessionStatus } from "@/types/session";
-import { MoreHorizontal, Trash2, Eye, Camera, User, Clock, CheckCircle, Upload, Play } from "lucide-react";
+import { MoreHorizontal, Trash2, Eye, Camera, User, Clock, CheckCircle, Upload, Play, Palette } from "lucide-react";
 
 interface SessionTableProps {
   sessions: Session[];
@@ -37,6 +37,7 @@ interface SessionTableProps {
   onUploadPhoto: (session: Session) => void;
   onClearSession?: (photoboothId: string) => void;
   onStartCapture?: (sessionId: string) => void;
+  onChangeFilter?: (session: Session) => void;
 }
 
 function SessionTable({ 
@@ -47,7 +48,8 @@ function SessionTable({
   onViewDetails,
   onUploadPhoto,
   onClearSession,
-  onStartCapture
+  onStartCapture,
+  onChangeFilter
 }: SessionTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -237,6 +239,12 @@ function SessionTable({
                           <DropdownMenuItem onClick={() => onStartCapture(session.id)}>
                             <Play className="mr-2 h-4 w-4" />
                             Start Capture
+                          </DropdownMenuItem>
+                        )}
+                        {session.status === 'active' && onChangeFilter && (
+                          <DropdownMenuItem onClick={() => onChangeFilter(session)}>
+                            <Palette className="mr-2 h-4 w-4" />
+                            Change Filter
                           </DropdownMenuItem>
                         )}
                         {session.status === 'active' && onClearSession && (

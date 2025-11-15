@@ -81,6 +81,18 @@ class SessionService {
   async startCapture(sessionId: string): Promise<void> {
     return apiClient.post<void>(`${this.BASE_URL}/${sessionId}/start-capture`);
   }
+
+  // Add filter to session (adds to filterIds array)
+  async addFilter(sessionId: string, filterId: string): Promise<Session> {
+    return apiClient.post<Session>(`/photobooth/sessions/${sessionId}/change-filter`, {
+      filterId,
+    });
+  }
+
+  // Remove filter from session (removes from filterIds array)
+  async removeFilter(sessionId: string, filterId: string): Promise<Session> {
+    return apiClient.delete<Session>(`/photobooth/sessions/${sessionId}/change-filter/${filterId}`);
+  }
 }
 
 export const sessionService = new SessionService();
