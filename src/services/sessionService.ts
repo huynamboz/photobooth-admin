@@ -79,7 +79,7 @@ class SessionService {
 
   // Admin operation: Start capture for a session
   async startCapture(sessionId: string): Promise<void> {
-    return apiClient.post<void>(`${this.BASE_URL}/${sessionId}/start-capture`);
+    return apiClient.post<void>(`/photobooth/sessions/${sessionId}/start-capture`);
   }
 
   // Add filter to session (adds to filterIds array)
