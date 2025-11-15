@@ -16,7 +16,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { 
-  Search, 
   Filter, 
   X,
   Calendar as CalendarIcon

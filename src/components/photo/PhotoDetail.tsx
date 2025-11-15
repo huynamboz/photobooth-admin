@@ -19,10 +19,9 @@ interface PhotoDetailProps {
   isOpen: boolean;
   onClose: () => void;
   photo: Photo | null;
-  loading?: boolean;
 }
 
-function PhotoDetail({ isOpen, onClose, photo, loading = false }: PhotoDetailProps) {
+function PhotoDetail({ isOpen, onClose, photo }: PhotoDetailProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',

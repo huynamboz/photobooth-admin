@@ -341,7 +341,6 @@ function SessionsPage() {
             isOpen={isDetailOpen}
             onClose={handleDetailClose}
             session={selectedSession}
-            loading={loading}
           />
         </div>
       </div>

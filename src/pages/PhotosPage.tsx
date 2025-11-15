@@ -225,7 +225,6 @@ function PhotosPage() {
             isOpen={isDetailOpen}
             onClose={handleDetailClose}
             photo={selectedPhoto}
-            loading={loading}
           />
         </div>
       </div>

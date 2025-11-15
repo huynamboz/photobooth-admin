@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type SessionStatus, type SessionFilters } from "@/types/session";
-import { Search, Filter, X, Calendar } from "lucide-react";
+import { Search, X, Calendar } from "lucide-react";
 
 interface SessionFiltersProps {
   filters: SessionFilters;

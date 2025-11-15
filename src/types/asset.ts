@@ -1,8 +1,10 @@
-export enum AssetType {
-  FRAME = 'frame',
-  FILTER = 'filter',
-  STICKER = 'sticker'
-}
+export const AssetType = {
+  FRAME: 'frame',
+  FILTER: 'filter',
+  STICKER: 'sticker'
+} as const;
+
+export type AssetType = typeof AssetType[keyof typeof AssetType];
 
 export interface Asset {
   id: string;

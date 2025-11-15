@@ -34,10 +34,8 @@ import {
   Download, 
   Edit,
   CheckCircle,
-  Clock,
   Image as ImageIcon
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface PhotoTableProps {
   photos: Photo[];

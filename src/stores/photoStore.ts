@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { photoService } from '@/services/photoService';
-import { type Photo, type GetPhotosParams, type PaginatedPhotoResponse } from '@/types/photo';
+import { type Photo, type GetPhotosParams } from '@/types/photo';
 
 interface PhotoFilters {
   sessionId?: string;
@@ -38,7 +38,7 @@ interface PhotoStore {
   setSelectedPhoto: (photo: Photo | null) => void;
 }
 
-export const usePhotoStore = create<PhotoStore>((set, get) => ({
+export const usePhotoStore = create<PhotoStore>((set) => ({
   // Initial state
   photos: [],
   selectedPhoto: null,

@@ -75,8 +75,13 @@ export const useStatsStore = create<StatsStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const chartData = await statsService.getSessionsChartData(days);
+      // Map API response to TimeSeriesData format
+      const mappedData = chartData.map(item => ({
+        time: item.date,
+        value: item.count,
+      }));
       set({ 
-        sessionsChartData: chartData,
+        sessionsChartData: mappedData,
         loading: false 
       });
     } catch (error) {

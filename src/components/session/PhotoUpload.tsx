@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Upload, Image, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface PhotoUploadProps {
@@ -15,7 +15,7 @@ interface PhotoUploadProps {
   loading?: boolean;
 }
 
-function PhotoUpload({ isOpen, onClose, onUpload, sessionId, loading = false }: PhotoUploadProps) {
+function PhotoUpload({ isOpen, onClose, onUpload, loading = false }: PhotoUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
