@@ -76,6 +76,11 @@ class SessionService {
     // Step 2: Add photo to session
     return this.addPhotoToSession(sessionId, imageUrl, publicId, caption);
   }
+
+  // Admin operation: Start capture for a session
+  async startCapture(sessionId: string): Promise<void> {
+    return apiClient.post<void>(`${this.BASE_URL}/${sessionId}/start-capture`);
+  }
 }
 
 export const sessionService = new SessionService();

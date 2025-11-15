@@ -1,70 +1,93 @@
-# Photobooth Session API - Complete Examples
+# Photobooth Session Management API Documentation
 
 ## Overview
 
-This document provides comprehensive, real-world examples for using the Photobooth Session Management API. All examples include actual curl commands and expected responses.
+This document describes the complete API for managing photobooth sessions, including user authentication, session lifecycle, photo management, and photobooth status monitoring.
 
-## Prerequisites
+## Table of Contents
 
-- Server running on `http://localhost:3000`
-- Valid user account with appropriate permissions
-- JWT token for authentication
+1. [Authentication](#authentication)
+2. [Photobooth Management](#photobooth-management)
+3. [Session Management](#session-management)
+4. [Photo Management](#photo-management)
+5. [Admin Management](#admin-management)
+6. [Error Handling](#error-handling)
+7. [API Examples](#api-examples)
 
 ---
 
-## Complete User Journey Examples
+## Authentication
 
-### Example 1: Wedding Photobooth Session
+### Login
+**POST** `/api/v1/auth/login`
 
-#### Step 1: User Login
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "bride@example.com",
-    "password": "wedding2024"
-  }'
+Authenticate user and get JWT token for session management.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
 ```
 
 **Response:**
 ```json
 {
   "message": "Login successful",
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson"
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "user@example.com",
+    "name": "John Doe"
   }
 }
 ```
 
-#### Step 2: Check Available Photobooths
-```bash
-curl -X GET http://localhost:3000/api/v1/photobooth/available \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token"
+**Headers Required:**
 ```
+Authorization: Bearer <access_token>
+```
+
+---
+
+## Photobooth Management
+
+### Get Photobooth Status
+**GET** `/api/v1/photobooth/status`
+
+Get overall photobooth system status.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "totalPhotobooths": 3,
+  "availablePhotobooths": 2,
+  "busyPhotobooths": 1,
+  "activeSessions": 1,
+  "totalSessionsToday": 15,
+  "averageSessionDuration": "00:03:45"
+}
+```
+
+### Get Available Photobooths
+**GET** `/api/v1/photobooth/available`
+
+Get list of available photobooths for session creation.
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Response:**
 ```json
 [
   {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "description": "Elegant photobooth for wedding ceremonies",
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Photobooth #1",
+    "description": "Main photobooth at entrance",
     "status": "available",
-    "location": "Reception Hall",
-    "isActive": true,
-    "currentSessionId": null,
-    "createdAt": "2025-10-27T06:41:55.309Z",
-    "updatedAt": "2025-10-27T08:06:00.519Z"
-  },
-  {
-    "id": "photobooth-456",
-    "name": "Garden Photobooth",
-    "description": "Outdoor photobooth in the garden",
-    "status": "available",
-    "location": "Garden Pavilion",
+    "location": "Entrance Hall",
     "isActive": true,
     "currentSessionId": null,
     "createdAt": "2025-10-27T06:41:55.309Z",
@@ -73,440 +96,438 @@ curl -X GET http://localhost:3000/api/v1/photobooth/available \
 ]
 ```
 
-#### Step 3: Create Wedding Session
-```bash
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "photoboothId": "photobooth-123",
-    "maxPhotos": 10,
-    "notes": "Wedding ceremony photos - Bride and Groom"
-  }'
+---
+
+## Session Management
+
+### Create Session
+**POST** `/api/v1/photobooth/sessions`
+
+Create a new photobooth session.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "photoboothId": "123e4567-e89b-12d3-a456-426614174000",
+  "maxPhotos": 5,
+  "notes": "Optional session notes"
+}
 ```
 
-**Note:** The `userId` is automatically extracted from the JWT token in the Authorization header. You don't need to include it in the request body.
+**Note:** The `userId` is automatically extracted from the JWT token. You don't need to include it in the request body.
 
 **Response:**
 ```json
 {
-  "id": "session-wedding-001",
+  "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
   "status": "pending",
-  "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
+  "userId": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
   "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson",
+    "id": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+    "email": "admin@photoboth.com",
+    "name": "System Administrator",
     "role": {
-      "id": "role-user-001",
-      "name": "user"
+      "id": "38e2b0b0-080c-4c66-b600-94769df3aa57",
+      "name": "admin"
     }
   },
-  "photoboothId": "photobooth-123",
+  "photoboothId": "e3e0d016-f898-4baa-a283-853f56c70ba9",
   "photobooth": {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "description": "Elegant photobooth for wedding ceremonies",
+    "id": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+    "name": "Photobooth #1",
+    "description": "Main photobooth at entrance",
     "status": "busy",
-    "location": "Reception Hall",
+    "location": "Entrance Hall",
     "isActive": true,
-    "currentSessionId": "session-wedding-001"
+    "currentSessionId": "7eff879d-09ea-4ea3-994c-75524ffd148a"
   },
   "photos": [],
   "startedAt": null,
   "completedAt": null,
-  "expiresAt": "2025-10-27T16:30:00.000Z",
+  "expiresAt": "2025-10-27T15:36:19.609Z",
   "photoCount": 0,
-  "maxPhotos": 10,
-  "notes": "Wedding ceremony photos - Bride and Groom",
-  "createdAt": "2025-10-27T15:30:00.000Z",
-  "updatedAt": "2025-10-27T15:30:00.000Z"
+  "maxPhotos": 3,
+  "notes": "Test session with user",
+  "createdAt": "2025-10-27T08:06:19.611Z",
+  "updatedAt": "2025-10-27T08:06:19.611Z"
 }
 ```
 
-#### Step 4: Start Session
-```bash
-curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/start \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
+### Get Session Details
+**GET** `/api/v1/photobooth/sessions/{sessionId}`
+
+Get detailed information about a specific session.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+  "status": "active",
+  "userId": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+  "user": {
+    "id": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+    "email": "admin@photoboth.com",
+    "name": "System Administrator",
+    "role": {
+      "id": "38e2b0b0-080c-4c66-b600-94769df3aa57",
+      "name": "admin"
+    }
+  },
+  "photoboothId": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+  "photobooth": {
+    "id": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+    "name": "Photobooth #1",
+    "status": "busy",
+    "location": "Entrance Hall"
+  },
+  "photos": [
+    {
+      "id": "fa7c3c4c-2628-4f7a-b4e2-f4fae30cfdde",
+      "imageUrl": "https://example.com/photo1.jpg",
+      "order": 1,
+      "caption": "First photo",
+      "isProcessed": false,
+      "createdAt": "2025-10-27T08:06:46.338Z"
+    }
+  ],
+  "startedAt": "2025-10-27T15:06:28.994Z",
+  "completedAt": null,
+  "expiresAt": "2025-10-27T15:36:19.609Z",
+  "photoCount": 1,
+  "maxPhotos": 3,
+  "notes": "Test session with user"
+}
+```
+
+### Start Session
+**PUT** `/api/v1/photobooth/sessions/{sessionId}/start`
+
+Start an active session (change status from PENDING to ACTIVE).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{}
 ```
 
 **Response:**
 ```json
 {
-  "id": "session-wedding-001",
+  "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
   "status": "active",
-  "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
-  "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson"
-  },
-  "photoboothId": "photobooth-123",
-  "photobooth": {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "status": "busy",
-    "location": "Reception Hall"
-  },
-  "photos": [],
-  "startedAt": "2025-10-27T15:32:15.000Z",
-  "completedAt": null,
-  "expiresAt": "2025-10-27T16:30:00.000Z",
+  "startedAt": "2025-10-27T15:06:28.994Z",
   "photoCount": 0,
-  "maxPhotos": 10,
-  "notes": "Wedding ceremony photos - Bride and Groom"
+  "maxPhotos": 3
 }
 ```
 
-#### Step 5: Upload Images and Add to Session
+### Complete Session
+**PUT** `/api/v1/photobooth/sessions/{sessionId}/complete`
 
-**Step 5a: Upload Images**
-```bash
-# Upload Photo 1 - Bride and Groom
-curl -X POST http://localhost:3000/api/v1/photobooth/upload-image \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -F "file=@/path/to/bride-groom-photo.jpg"
+Complete an active session (change status from ACTIVE to COMPLETED).
 
-# Upload Photo 2 - Wedding Party
-curl -X POST http://localhost:3000/api/v1/photobooth/upload-image \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -F "file=@/path/to/wedding-party-photo.jpg"
+**Headers:** `Authorization: Bearer <token>`
 
-# Upload Photo 3 - Family Photo
-curl -X POST http://localhost:3000/api/v1/photobooth/upload-image \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -F "file=@/path/to/family-photo.jpg"
+**Request Body:**
+```json
+{}
 ```
 
-**Upload Response (Photo 1):**
+**Response:**
 ```json
 {
-  "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1732740000/photoboth/uploads/bride-groom-photo.jpg",
-  "publicId": "bride-groom-photo"
+  "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+  "status": "completed",
+  "completedAt": "2025-10-27T15:08:40.885Z",
+  "photoCount": 3,
+  "maxPhotos": 3,
+  "photos": [
+    {
+      "id": "fa7c3c4c-2628-4f7a-b4e2-f4fae30cfdde",
+      "imageUrl": "https://example.com/photo1.jpg",
+      "order": 1,
+      "caption": "First photo"
+    },
+    {
+      "id": "1e81a9eb-7d64-455c-b4e8-e1783226fbe9",
+      "imageUrl": "https://example.com/photo2.jpg",
+      "order": 2,
+      "caption": "Second photo"
+    },
+    {
+      "id": "5584f506-bd39-401c-8540-efa46605891c",
+      "imageUrl": "https://example.com/photo3.jpg",
+      "order": 3,
+      "caption": "Third photo"
+    }
+  ]
 }
 ```
 
-**Step 5b: Add Photos to Session**
-```bash
-# Add Photo 1 to session
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/photos \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1732740000/photoboth/uploads/bride-groom-photo.jpg",
-    "publicId": "bride-groom-photo",
-    "caption": "Bride and Groom - First Look"
-  }'
+### Cancel Session
+**PUT** `/api/v1/photobooth/sessions/{sessionId}/cancel`
 
-# Add Photo 2 to session
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/photos \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1732740001/photoboth/uploads/wedding-party-photo.jpg",
-    "publicId": "wedding-party-photo",
-    "caption": "Wedding Party Group Photo"
-  }'
+Cancel a session (change status to CANCELLED).
 
-# Add Photo 3 to session
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/photos \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1732740002/photoboth/uploads/family-photo.jpg",
-    "publicId": "family-photo",
-    "caption": "Family Photo - Both Sides"
-  }'
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{}
 ```
 
-**Response (Photo 1):**
+**Response:**
 ```json
 {
-  "id": "photo-wedding-001",
-  "sessionId": "session-wedding-001",
+  "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+  "status": "cancelled",
+  "photoCount": 0,
+  "maxPhotos": 3
+}
+```
+
+---
+
+## Photo Management
+
+### Get Session Photos
+**GET** `/api/v1/photobooth/sessions/{sessionId}/photos`
+
+Get all photos for a specific session.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+  {
+    "id": "fa7c3c4c-2628-4f7a-b4e2-f4fae30cfdde",
+    "sessionId": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+    "imageUrl": "https://example.com/photo1.jpg",
+    "publicId": null,
+    "thumbnailUrl": null,
+    "order": 1,
+    "caption": "First photo",
+    "isProcessed": false,
+    "processedAt": null,
+    "createdAt": "2025-10-27T08:06:46.338Z",
+    "updatedAt": "2025-10-27T08:06:46.338Z"
+  }
+]
+```
+
+### Take Photo
+**POST** `/api/v1/photobooth/sessions/{sessionId}/photos`
+
+Add a new photo to an active session.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "imageUrl": "https://example.com/photo1.jpg",
+  "caption": "Optional photo caption"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "fa7c3c4c-2628-4f7a-b4e2-f4fae30cfdde",
+  "sessionId": "7eff879d-09ea-4ea3-994c-75524ffd148a",
   "session": {
-    "id": "session-wedding-001",
+    "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
     "status": "active",
     "photoCount": 1,
-    "maxPhotos": 10
+    "maxPhotos": 3
   },
-  "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-001.jpg",
+  "imageUrl": "https://example.com/photo1.jpg",
   "publicId": null,
   "thumbnailUrl": null,
   "order": 1,
-  "caption": "Bride and Groom - First Look",
+  "caption": "First photo",
   "isProcessed": false,
   "processedAt": null,
-  "createdAt": "2025-10-27T15:33:45.000Z",
-  "updatedAt": "2025-10-27T15:33:45.000Z"
+  "createdAt": "2025-10-27T08:06:46.338Z",
+  "updatedAt": "2025-10-27T08:06:46.338Z"
 }
 ```
 
-#### Step 6: Check Session Status
-```bash
-curl -X GET http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token"
-```
+### Get Photo Details
+**GET** `/api/v1/photobooth/photos/{photoId}`
+
+Get detailed information about a specific photo.
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Response:**
 ```json
 {
-  "id": "session-wedding-001",
-  "status": "active",
-  "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
-  "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson"
+  "id": "fa7c3c4c-2628-4f7a-b4e2-f4fae30cfdde",
+  "sessionId": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+  "session": {
+    "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+    "status": "completed",
+    "userId": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+    "photoboothId": "e3e0d016-f898-4baa-a283-853f56c70ba9"
   },
-  "photoboothId": "photobooth-123",
-  "photobooth": {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "status": "busy",
-    "location": "Reception Hall"
-  },
-  "photos": [
-    {
-      "id": "photo-wedding-001",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-001.jpg",
-      "order": 1,
-      "caption": "Bride and Groom - First Look",
-      "isProcessed": false,
-      "createdAt": "2025-10-27T15:33:45.000Z"
-    },
-    {
-      "id": "photo-wedding-002",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-002.jpg",
-      "order": 2,
-      "caption": "Wedding Party Group Photo",
-      "isProcessed": false,
-      "createdAt": "2025-10-27T15:34:12.000Z"
-    },
-    {
-      "id": "photo-wedding-003",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-003.jpg",
-      "order": 3,
-      "caption": "Family Photo - Both Sides",
-      "isProcessed": false,
-      "createdAt": "2025-10-27T15:34:38.000Z"
-    }
-  ],
-  "startedAt": "2025-10-27T15:32:15.000Z",
-  "completedAt": null,
-  "expiresAt": "2025-10-27T16:30:00.000Z",
-  "photoCount": 3,
-  "maxPhotos": 10,
-  "notes": "Wedding ceremony photos - Bride and Groom"
-}
-```
-
-#### Step 7: Complete Session
-```bash
-curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/complete \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Response:**
-```json
-{
-  "id": "session-wedding-001",
-  "status": "completed",
-  "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
-  "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson"
-  },
-  "photoboothId": "photobooth-123",
-  "photobooth": {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "status": "available",
-    "location": "Reception Hall",
-    "currentSessionId": null
-  },
-  "photos": [
-    {
-      "id": "photo-wedding-001",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-001.jpg",
-      "order": 1,
-      "caption": "Bride and Groom - First Look"
-    },
-    {
-      "id": "photo-wedding-002",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-002.jpg",
-      "order": 2,
-      "caption": "Wedding Party Group Photo"
-    },
-    {
-      "id": "photo-wedding-003",
-      "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-003.jpg",
-      "order": 3,
-      "caption": "Family Photo - Both Sides"
-    }
-  ],
-  "startedAt": "2025-10-27T15:32:15.000Z",
-  "completedAt": "2025-10-27T15:35:22.000Z",
-  "expiresAt": "2025-10-27T16:30:00.000Z",
-  "photoCount": 3,
-  "maxPhotos": 10,
-  "notes": "Wedding ceremony photos - Bride and Groom"
+  "imageUrl": "https://example.com/photo1.jpg",
+  "publicId": null,
+  "thumbnailUrl": null,
+  "order": 1,
+  "caption": "First photo",
+  "isProcessed": false,
+  "processedAt": null,
+  "createdAt": "2025-10-27T08:06:46.338Z",
+  "updatedAt": "2025-10-27T08:06:46.338Z"
 }
 ```
 
 ---
 
-## Error Handling Examples
+## Admin Management
 
-### Example 1: Try to Create Session with Busy Photobooth
+### Get All Photobooths
+**GET** `/api/v1/admin/photobooth/photobooths`
 
-```bash
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "photoboothId": "photobooth-123",
-    "maxPhotos": 5
-  }'
-```
+Get paginated list of all photobooths (admin only).
 
-**Error Response:**
-```json
-{
-  "statusCode": 409,
-  "message": "Photobooth already has an active session",
-  "error": "Conflict"
-}
-```
+**Headers:** `Authorization: Bearer <admin_token>`
 
-### Example 2: Try to Take Photo in Completed Session
-
-```bash
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001/photos \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "imageUrl": "https://wedding-photos.com/session-wedding-001/photo-004.jpg",
-    "caption": "Additional photo"
-  }'
-```
-
-**Error Response:**
-```json
-{
-  "statusCode": 422,
-  "message": "Session is not active",
-  "error": "Unprocessable Entity"
-}
-```
-
-### Example 3: Try to Access Session with Invalid Token
-
-```bash
-curl -X GET http://localhost:3000/api/v1/photobooth/sessions/session-wedding-001 \
-  -H "Authorization: Bearer invalid_token"
-```
-
-**Error Response:**
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized",
-  "error": "Unauthorized"
-}
-```
-
-### Example 4: Try to Access Non-existent Session
-
-```bash
-curl -X GET http://localhost:3000/api/v1/photobooth/sessions/non-existent-session \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiY2Q0ZWE4YS0xMjM0LTQ1NjctODkwYS0xMjM0NTY3ODkwYWJjIiwiaWF0IjoxNzYxNTc3MzY4LCJpc3MiOiJuZXN0anMtYXBwIiwiZXhwIjoxNzY0MTY5MzY4fQ.example_token"
-```
-
-**Error Response:**
-```json
-{
-  "statusCode": 404,
-  "message": "Session not found",
-  "error": "Not Found"
-}
-```
-
-### Example 5: Try to Cancel Completed Session
-
-```bash
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/sessions/session-wedding-001/cancel \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Error Response:**
-```json
-{
-  "statusCode": 400,
-  "message": "Cannot cancel completed session",
-  "error": "Bad Request"
-}
-```
-
-### Example 6: Try to Cancel Session Without Admin Role
-
-```bash
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/sessions/session-id/cancel \
-  -H "Authorization: Bearer user_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Error Response:**
-```json
-{
-  "statusCode": 403,
-  "message": "Forbidden - Admin role required",
-  "error": "Forbidden"
-}
-```
-
----
-
-## Admin Management Examples
-
-### Example 1: Admin Login
-
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@photoboth.com",
-    "password": "Admin123!"
-  }'
-```
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `status` (optional): Filter by status (available, busy, maintenance)
+- `location` (optional): Filter by location
 
 **Response:**
 ```json
 {
-  "message": "Login successful",
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token",
-  "user": {
-    "id": "admin-id-123",
-    "email": "admin@photoboth.com",
-    "name": "System Administrator"
+  "data": [
+    {
+      "id": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+      "name": "Photobooth #1",
+      "description": "Main photobooth at entrance",
+      "status": "busy",
+      "location": "Entrance Hall",
+      "isActive": true,
+      "currentSessionId": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+      "createdAt": "2025-10-27T06:41:55.309Z",
+      "updatedAt": "2025-10-27T08:06:19.621Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
   }
 }
 ```
 
-### Example 2: Get System Statistics
+### Create Photobooth
+**POST** `/api/v1/admin/photobooth/photobooths`
 
-```bash
-curl -X GET http://localhost:3000/api/v1/admin/photobooth/stats \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token"
+Create a new photobooth (admin only).
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Request Body:**
+```json
+{
+  "name": "Photobooth #2",
+  "description": "Secondary photobooth",
+  "location": "Conference Room",
+  "isActive": true
+}
 ```
+
+**Response:**
+```json
+{
+  "id": "456e7890-e89b-12d3-a456-426614174001",
+  "name": "Photobooth #2",
+  "description": "Secondary photobooth",
+  "status": "available",
+  "location": "Conference Room",
+  "isActive": true,
+  "currentSessionId": null,
+  "createdAt": "2025-10-27T08:10:00.000Z",
+  "updatedAt": "2025-10-27T08:10:00.000Z"
+}
+```
+
+### Get All Sessions
+**GET** `/api/v1/admin/photobooth/sessions`
+
+Get paginated list of all sessions (admin only).
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `status` (optional): Filter by status (pending, active, completed, cancelled, expired)
+- `photoboothId` (optional): Filter by photobooth ID
+- `userId` (optional): Filter by user ID
+- `dateFrom` (optional): Filter from date (ISO string)
+- `dateTo` (optional): Filter to date (ISO string)
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "7eff879d-09ea-4ea3-994c-75524ffd148a",
+      "status": "completed",
+      "userId": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+      "user": {
+        "id": "ebb57c96-95e8-46b5-9272-d195a3dd921f",
+        "email": "admin@photoboth.com",
+        "name": "System Administrator"
+      },
+      "photoboothId": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+      "photobooth": {
+        "id": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+        "name": "Photobooth #1",
+        "location": "Entrance Hall"
+      },
+      "photoCount": 3,
+      "maxPhotos": 3,
+      "startedAt": "2025-10-27T15:06:28.994Z",
+      "completedAt": "2025-10-27T15:08:40.885Z",
+      "createdAt": "2025-10-27T08:06:19.611Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
+  }
+}
+```
+
+### Get Photobooth Statistics
+**GET** `/api/v1/admin/photobooth/stats`
+
+Get comprehensive photobooth system statistics (admin only).
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Query Parameters:**
+- `period` (optional): Time period (today, week, month, year)
+- `photoboothId` (optional): Specific photobooth ID
 
 **Response:**
 ```json
@@ -534,20 +555,12 @@ curl -X GET http://localhost:3000/api/v1/admin/photobooth/stats \
   },
   "photobooths": [
     {
-      "id": "photobooth-123",
-      "name": "Wedding Photobooth",
+      "id": "e3e0d016-f898-4baa-a283-853f56c70ba9",
+      "name": "Photobooth #1",
       "sessionsCount": 78,
       "photosCount": 234,
       "averageSessionDuration": "00:03:30",
       "utilizationRate": 0.85
-    },
-    {
-      "id": "photobooth-456",
-      "name": "Garden Photobooth",
-      "sessionsCount": 45,
-      "photosCount": 135,
-      "averageSessionDuration": "00:04:15",
-      "utilizationRate": 0.72
     }
   ],
   "timeRange": {
@@ -557,115 +570,18 @@ curl -X GET http://localhost:3000/api/v1/admin/photobooth/stats \
 }
 ```
 
-### Example 3: Get All Sessions with Filters
+### Cleanup Expired Sessions
+**POST** `/api/v1/admin/photobooth/cleanup/expired-sessions`
 
-```bash
-curl -X GET "http://localhost:3000/api/v1/admin/photobooth/sessions?page=1&limit=5&status=completed&dateFrom=2025-10-27T00:00:00.000Z&dateTo=2025-10-27T23:59:59.999Z" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token"
-```
+Clean up expired sessions and free up photobooths (admin only).
 
-**Response:**
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Request Body:**
 ```json
 {
-  "data": [
-    {
-      "id": "session-wedding-001",
-      "status": "completed",
-      "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
-      "user": {
-        "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-        "email": "bride@example.com",
-        "name": "Sarah Johnson"
-      },
-      "photoboothId": "photobooth-123",
-      "photobooth": {
-        "id": "photobooth-123",
-        "name": "Wedding Photobooth",
-        "location": "Reception Hall"
-      },
-      "photoCount": 3,
-      "maxPhotos": 10,
-      "startedAt": "2025-10-27T15:32:15.000Z",
-      "completedAt": "2025-10-27T15:35:22.000Z",
-      "createdAt": "2025-10-27T15:30:00.000Z"
-    }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 5,
-    "total": 1,
-    "totalPages": 1,
-    "hasNext": false,
-    "hasPrev": false
-  }
+  "dryRun": false
 }
-```
-
-### Example 4: Cancel Session as Admin
-
-```bash
-# Cancel an active session when user doesn't complete it
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/sessions/session-wedding-001/cancel \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Response:**
-```json
-{
-  "id": "session-wedding-001",
-  "status": "cancelled",
-  "userId": "bcd4ea8a-1234-4567-890a-1234567890abc",
-  "user": {
-    "id": "bcd4ea8a-1234-4567-890a-1234567890abc",
-    "email": "bride@example.com",
-    "name": "Sarah Johnson"
-  },
-  "photoboothId": "photobooth-123",
-  "photobooth": {
-    "id": "photobooth-123",
-    "name": "Wedding Photobooth",
-    "status": "available",
-    "currentSessionId": null
-  },
-  "photos": [],
-  "photoCount": 0,
-  "maxPhotos": 10,
-  "notes": "Wedding ceremony photos - Bride and Groom"
-}
-```
-
-### Example 5: Clear Photobooth Session (Admin)
-
-```bash
-# Manually clear session from photobooth when stuck
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/photobooths/photobooth-123/clear-session \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token"
-```
-
-**Response:**
-```json
-{
-  "id": "photobooth-123",
-  "name": "Wedding Photobooth",
-  "description": "Elegant photobooth for wedding ceremonies",
-  "status": "available",
-  "location": "Reception Hall",
-  "isActive": true,
-  "currentSessionId": null,
-  "createdAt": "2025-10-27T06:41:55.309Z",
-  "updatedAt": "2025-10-27T08:59:56.389Z"
-}
-```
-
-### Example 6: Cleanup Expired Sessions
-
-```bash
-curl -X POST http://localhost:3000/api/v1/admin/photobooth/cleanup/expired-sessions \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi1pZCIsImlhdCI6MTc2MTU3NzM2OCwiaXNzIjoibmVzdGpzLWFwcCIsImV4cCI6MTc2NDE2OTM2OH0.admin_token" \
-  -H "Content-Type: application/json" \
-  -d '{"dryRun": false}'
 ```
 
 **Response:**
@@ -676,13 +592,8 @@ curl -X POST http://localhost:3000/api/v1/admin/photobooth/cleanup/expired-sessi
   "freedPhotobooths": 2,
   "details": [
     {
-      "sessionId": "expired-session-001",
-      "photoboothId": "photobooth-789",
-      "action": "expired"
-    },
-    {
-      "sessionId": "expired-session-002",
-      "photoboothId": "photobooth-101",
+      "sessionId": "expired-session-id",
+      "photoboothId": "freed-photobooth-id",
       "action": "expired"
     }
   ]
@@ -691,301 +602,304 @@ curl -X POST http://localhost:3000/api/v1/admin/photobooth/cleanup/expired-sessi
 
 ---
 
-## Advanced Use Cases
+## Error Handling
 
-### Use Case 1: Corporate Event with Multiple Photobooths
+### Common Error Responses
 
-```bash
-# Check system status
-curl -X GET http://localhost:3000/api/v1/photobooth/status \
-  -H "Authorization: Bearer corporate_token"
-
-# Create sessions for different photobooths
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer corporate_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "photoboothId": "corporate-booth-1",
-    "maxPhotos": 5,
-    "notes": "Executive team photos"
-  }'
-
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer corporate_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "photoboothId": "corporate-booth-2",
-    "maxPhotos": 5,
-    "notes": "Employee group photos"
-  }'
-```
-
-### Use Case 2: Quick Photo Session (Minimal Photos)
-
-```bash
-# Create session with minimal photos
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer quick_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "photoboothId": "quick-booth",
-    "maxPhotos": 1,
-    "notes": "Quick selfie session"
-  }'
-
-# Start session
-curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/session-id/start \
-  -H "Authorization: Bearer quick_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-
-# Upload image
-curl -X POST http://localhost:3000/api/v1/photobooth/upload-image \
-  -H "Authorization: Bearer quick_token" \
-  -F "file=@/path/to/selfie.jpg"
-
-# Add photo to session
-curl -X POST http://localhost:3000/api/v1/photobooth/sessions/session-id/photos \
-  -H "Authorization: Bearer quick_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1732740000/photoboth/uploads/selfie.jpg",
-    "publicId": "selfie",
-    "caption": "Quick selfie"
-  }'
-
-# Complete session
-curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/session-id/complete \
-  -H "Authorization: Bearer quick_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-### Use Case 3: Session Cancellation
-
-#### User Cancellation
-```bash
-# Cancel a session before completion (by user)
-curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/session-id/cancel \
-  -H "Authorization: Bearer user_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Response:**
+#### 400 Bad Request
 ```json
 {
-  "id": "session-id",
-  "status": "cancelled",
-  "userId": "user-id",
-  "photoboothId": "photobooth-id",
-  "photobooth": {
-    "id": "photobooth-id",
-    "name": "Photobooth Name",
-    "status": "available",
-    "currentSessionId": null
-  },
-  "photos": [],
-  "photoCount": 0,
-  "maxPhotos": 5,
-  "notes": "Session cancelled by user"
+  "statusCode": 400,
+  "message": "Validation failed",
+  "error": "Bad Request",
+  "details": [
+    {
+      "field": "photoboothId",
+      "message": "Photobooth ID is required"
+    }
+  ]
 }
 ```
 
-#### Admin Cancellation
-```bash
-# Cancel a session as admin (when user doesn't complete)
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/sessions/session-id/cancel \
-  -H "Authorization: Bearer admin_token" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-**Response:**
+#### 401 Unauthorized
 ```json
 {
-  "id": "session-id",
-  "status": "cancelled",
-  "userId": "user-id",
-  "user": {
-    "id": "user-id",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "error": "Unauthorized"
+}
+```
+
+#### 403 Forbidden
+```json
+{
+  "statusCode": 403,
+  "message": "Insufficient permissions",
+  "error": "Forbidden"
+}
+```
+
+#### 404 Not Found
+```json
+{
+  "statusCode": 404,
+  "message": "Session not found",
+  "error": "Not Found"
+}
+```
+
+#### 409 Conflict
+```json
+{
+  "statusCode": 409,
+  "message": "Photobooth already has an active session",
+  "error": "Conflict"
+}
+```
+
+#### 422 Unprocessable Entity
+```json
+{
+  "statusCode": 422,
+  "message": "Session is not in the correct state for this operation",
+  "error": "Unprocessable Entity"
+}
+```
+
+#### 500 Internal Server Error
+```json
+{
+  "statusCode": 500,
+  "message": "Internal server error",
+  "error": "Internal Server Error"
+}
+```
+
+### Session Status Validation
+
+| Current Status | Allowed Operations |
+|----------------|-------------------|
+| `pending` | `start`, `cancel` |
+| `active` | `complete`, `cancel`, `take_photo` |
+| `completed` | None (final state) |
+| `cancelled` | None (final state) |
+| `expired` | None (final state) |
+
+---
+
+## API Examples
+
+### Complete User Flow
+
+#### 1. User Login
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
     "email": "user@example.com",
-    "name": "User Name"
-  },
-  "photoboothId": "photobooth-id",
-  "photobooth": {
-    "id": "photobooth-id",
-    "name": "Photobooth Name",
-    "status": "available",
-    "currentSessionId": null
-  },
-  "photos": [],
-  "photoCount": 0,
-  "maxPhotos": 5,
-  "notes": "Session cancelled by admin"
+    "password": "password123"
+  }'
+```
+
+#### 2. Get Available Photobooths
+```bash
+curl -X GET http://localhost:3000/api/v1/photobooth/available \
+  -H "Authorization: Bearer <token>"
+```
+
+#### 3. Create Session
+```bash
+curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "photoboothId": "123e4567-e89b-12d3-a456-426614174000",
+    "maxPhotos": 5,
+    "notes": "Wedding photos"
+  }'
+```
+
+#### 4. Start Session
+```bash
+curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/{sessionId}/start \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+#### 5. Take Photos
+```bash
+# Photo 1
+curl -X POST http://localhost:3000/api/v1/photobooth/sessions/{sessionId}/photos \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageUrl": "https://example.com/photo1.jpg",
+    "caption": "First photo"
+  }'
+
+# Photo 2
+curl -X POST http://localhost:3000/api/v1/photobooth/sessions/{sessionId}/photos \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageUrl": "https://example.com/photo2.jpg",
+    "caption": "Second photo"
+  }'
+```
+
+#### 6. Complete Session
+```bash
+curl -X PUT http://localhost:3000/api/v1/photobooth/sessions/{sessionId}/complete \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### Admin Management Flow
+
+#### 1. Admin Login
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@photoboth.com",
+    "password": "Admin123!"
+  }'
+```
+
+#### 2. Get System Statistics
+```bash
+curl -X GET http://localhost:3000/api/v1/admin/photobooth/stats \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### 3. Get All Sessions
+```bash
+curl -X GET "http://localhost:3000/api/v1/admin/photobooth/sessions?page=1&limit=10&status=completed" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### 4. Cleanup Expired Sessions
+```bash
+curl -X POST http://localhost:3000/api/v1/admin/photobooth/cleanup/expired-sessions \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"dryRun": false}'
+```
+
+---
+
+## Data Models
+
+### Session Entity
+```typescript
+interface Session {
+  id: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled' | 'expired';
+  userId?: string;
+  user?: User;
+  photoboothId: string;
+  photobooth: Photobooth;
+  photos: Photo[];
+  startedAt?: Date;
+  completedAt?: Date;
+  expiresAt: Date;
+  photoCount: number;
+  maxPhotos: number;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
-#### Clear Photobooth Session (Admin)
-```bash
-# Manually clear session from photobooth (admin only)
-curl -X PUT http://localhost:3000/api/v1/admin/photobooth/photobooths/photobooth-id/clear-session \
-  -H "Authorization: Bearer admin_token"
+### Photo Entity
+```typescript
+interface Photo {
+  id: string;
+  sessionId: string;
+  session?: Session;
+  imageUrl: string;
+  publicId?: string;
+  thumbnailUrl?: string;
+  order: number;
+  caption?: string;
+  isProcessed: boolean;
+  processedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
 ```
 
-**Response:**
-```json
-{
-  "id": "photobooth-id",
-  "name": "Photobooth Name",
-  "description": "Photobooth description",
-  "status": "available",
-  "location": "Location",
-  "isActive": true,
-  "currentSessionId": null,
-  "createdAt": "2025-10-27T06:41:55.309Z",
-  "updatedAt": "2025-10-27T08:59:56.389Z"
+### Photobooth Entity
+```typescript
+interface Photobooth {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'available' | 'busy' | 'maintenance';
+  location: string;
+  isActive: boolean;
+  currentSessionId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### User Entity
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role?: {
+    id: string;
+    name: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
 ---
 
-## Testing Scripts
+## Rate Limiting
 
-### Complete Test Script
-
-```bash
-#!/bin/bash
-
-# Set variables
-BASE_URL="http://localhost:3000"
-EMAIL="test@example.com"
-PASSWORD="password123"
-
-echo "=== Photobooth Session API Test ==="
-
-# Step 1: Login
-echo "1. Logging in..."
-LOGIN_RESPONSE=$(curl -s -X POST $BASE_URL/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
-
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.access_token')
-echo "Login successful. Token: ${TOKEN:0:20}..."
-
-# Step 2: Get available photobooths
-echo "2. Getting available photobooths..."
-PHOTOBOOTHS=$(curl -s -X GET $BASE_URL/api/v1/photobooth/available \
-  -H "Authorization: Bearer $TOKEN")
-
-PHOTOBOOTH_ID=$(echo $PHOTOBOOTHS | jq -r '.[0].id')
-echo "Found photobooth: $PHOTOBOOTH_ID"
-
-# Step 3: Create session
-echo "3. Creating session..."
-SESSION_RESPONSE=$(curl -s -X POST $BASE_URL/api/v1/photobooth/sessions \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"photoboothId\":\"$PHOTOBOOTH_ID\",\"maxPhotos\":3,\"notes\":\"Test session\"}")
-
-SESSION_ID=$(echo $SESSION_RESPONSE | jq -r '.id')
-echo "Session created: $SESSION_ID"
-
-# Step 4: Start session
-echo "4. Starting session..."
-curl -s -X PUT $BASE_URL/api/v1/photobooth/sessions/$SESSION_ID/start \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{}' > /dev/null
-echo "Session started"
-
-# Step 5: Take photos
-echo "5. Taking photos..."
-for i in {1..3}; do
-  curl -s -X POST $BASE_URL/api/v1/photobooth/sessions/$SESSION_ID/photos \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{\"imageUrl\":\"https://example.com/photo$i.jpg\",\"caption\":\"Photo $i\"}" > /dev/null
-  echo "Photo $i taken"
-done
-
-# Step 6: Complete session
-echo "6. Completing session..."
-curl -s -X PUT $BASE_URL/api/v1/photobooth/sessions/$SESSION_ID/complete \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{}' > /dev/null
-echo "Session completed"
-
-# Step 7: Get final session details
-echo "7. Getting final session details..."
-FINAL_SESSION=$(curl -s -X GET $BASE_URL/api/v1/photobooth/sessions/$SESSION_ID \
-  -H "Authorization: Bearer $TOKEN")
-
-PHOTO_COUNT=$(echo $FINAL_SESSION | jq -r '.photoCount')
-STATUS=$(echo $FINAL_SESSION | jq -r '.status')
-echo "Final status: $STATUS, Photos: $PHOTO_COUNT"
-
-echo "=== Test completed successfully! ==="
-```
+- **Authentication endpoints**: 5 requests per minute per IP
+- **Session creation**: 10 requests per minute per user
+- **Photo upload**: 30 requests per minute per session
+- **Admin endpoints**: 100 requests per minute per admin user
 
 ---
 
-## Performance Testing
+## WebSocket Events (Future Enhancement)
 
-### Load Test Script
-
-```bash
-#!/bin/bash
-
-# Load test for session creation
-for i in {1..10}; do
-  curl -X POST http://localhost:3000/api/v1/photobooth/sessions \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{\"photoboothId\":\"$PHOTOBOOTH_ID\",\"maxPhotos\":3}" &
-done
-
-wait
-echo "Load test completed"
-```
+### Real-time Updates
+- `session.created` - New session created
+- `session.started` - Session started
+- `session.completed` - Session completed
+- `session.cancelled` - Session cancelled
+- `photo.taken` - New photo added to session
+- `photobooth.status_changed` - Photobooth status updated
 
 ---
 
-## Conclusion
+## Changelog
 
-These examples demonstrate the complete functionality of the Photobooth Session Management API, including:
-
+### Version 1.0.0 (2025-10-27)
+- Initial release
+- Complete session management API
 - User authentication and authorization
-- Session lifecycle management (create, start, complete, cancel)
-- Photo capture and management
-- Error handling and validation
-- Admin management capabilities
-  - Cancel sessions when users don't complete them
-  - Clear stuck sessions from photobooths
-  - System statistics and monitoring
-  - Cleanup expired sessions
-- Real-world use cases
-- Testing and performance considerations
+- Photo management
+- Admin dashboard support
+- Real-time status monitoring
+- Comprehensive error handling
 
-### Key Features Added
+---
 
-- **Admin Cancel Session**: `PUT /api/v1/admin/photobooth/sessions/:id/cancel`
-  - Allows admins to cancel sessions when users don't complete them
-  - Automatically frees up photobooth for next user
-  - Prevents cancellation of already completed sessions
+## Support
 
-- **Clear Photobooth Session**: `PUT /api/v1/admin/photobooth/photobooths/:id/clear-session`
-  - Manually clear stuck sessions from photobooths
-  - Useful for troubleshooting and maintenance
-  - Sets photobooth status back to available
-
-- **Image Upload Endpoint**: `POST /api/v1/photobooth/upload-image`
-  - Upload image files to Cloudinary and get URLs for use in sessions
-  - Supports multiple image formats (JPEG, PNG, GIF, WebP)
-  - File size validation (max 10MB)
-  - Returns Cloudinary URL and public ID
-  - Automatic image optimization and CDN delivery
-  - Separates file upload from session management for better architecture
-
-The API is designed to be robust, scalable, and easy to integrate with various frontend applications and photobooth hardware systems. The admin management features ensure smooth operation even when users encounter issues or don't complete their sessions properly.
+For technical support or questions about this API, please contact:
+- Email: support@photoboth.com
+- Documentation: https://docs.photoboth.com
+- GitHub: https://github.com/photoboth/api

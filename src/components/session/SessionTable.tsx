@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { type Session, type SessionStatus } from "@/types/session";
-import { MoreHorizontal, Trash2, Eye, Camera, User, Clock, CheckCircle, Upload } from "lucide-react";
+import { MoreHorizontal, Trash2, Eye, Camera, User, Clock, CheckCircle, Upload, Play } from "lucide-react";
 
 interface SessionTableProps {
   sessions: Session[];
@@ -36,6 +36,7 @@ interface SessionTableProps {
   onViewDetails: (session: Session) => void;
   onUploadPhoto: (session: Session) => void;
   onClearSession?: (photoboothId: string) => void;
+  onStartCapture?: (sessionId: string) => void;
 }
 
 function SessionTable({ 
@@ -45,7 +46,8 @@ function SessionTable({
   onStatusChange,
   onViewDetails,
   onUploadPhoto,
-  onClearSession
+  onClearSession,
+  onStartCapture
 }: SessionTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -165,12 +167,8 @@ function SessionTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Camera className="h-4 w-4 text-gray-400" />
                       <div>
                         <div className="font-medium">{session.photobooth.name}</div>
-                        {session.photobooth.location && (
-                          <div className="text-sm text-gray-500">{session.photobooth.location}</div>
-                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -233,6 +231,12 @@ function SessionTable({
                           <DropdownMenuItem onClick={() => onStatusChange(session.id, 'completed')}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Complete Session
+                          </DropdownMenuItem>
+                        )}
+                        {session.status === 'active' && onStartCapture && (
+                          <DropdownMenuItem onClick={() => onStartCapture(session.id)}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Start Capture
                           </DropdownMenuItem>
                         )}
                         {session.status === 'active' && onClearSession && (

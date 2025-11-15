@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AssetType, type UploadAssetRequest } from "@/types/asset";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
@@ -18,6 +19,14 @@ function AssetUpload({ isOpen, onClose, onUpload }: AssetUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Filter properties (only for type="filter")
+  const [filterType, setFilterType] = useState<string>('');
+  const [scale, setScale] = useState<string>('');
+  const [offsetY, setOffsetY] = useState<string>('');
+  const [anchorIdx, setAnchorIdx] = useState<string>('');
+  const [leftIdx, setLeftIdx] = useState<string>('');
+  const [rightIdx, setRightIdx] = useState<string>('');
 
   const handleFileSelect = (file: File) => {
     // Validate file type
@@ -73,10 +82,22 @@ function AssetUpload({ isOpen, onClose, onUpload }: AssetUploadProps) {
 
     setUploading(true);
     try {
-      await onUpload({
+      const uploadData: UploadAssetRequest = {
         file: selectedFile,
         type: assetType,
-      });
+      };
+
+      // Add filter properties if type is filter
+      if (assetType === AssetType.FILTER) {
+        uploadData.filterType = filterType || null;
+        if (scale) uploadData.scale = parseFloat(scale);
+        if (offsetY) uploadData.offset_y = parseFloat(offsetY);
+        if (anchorIdx) uploadData.anchor_idx = parseInt(anchorIdx, 10);
+        if (leftIdx) uploadData.left_idx = parseInt(leftIdx, 10);
+        if (rightIdx) uploadData.right_idx = parseInt(rightIdx, 10);
+      }
+
+      await onUpload(uploadData);
       toast.success('Asset uploaded successfully');
       onClose();
       resetForm();
@@ -91,10 +112,28 @@ function AssetUpload({ isOpen, onClose, onUpload }: AssetUploadProps) {
     setSelectedFile(null);
     setAssetType(AssetType.FRAME);
     setUploading(false);
+    setFilterType('');
+    setScale('');
+    setOffsetY('');
+    setAnchorIdx('');
+    setLeftIdx('');
+    setRightIdx('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
+
+  // Reset filter fields when asset type changes
+  useEffect(() => {
+    if (assetType !== AssetType.FILTER) {
+      setFilterType('');
+      setScale('');
+      setOffsetY('');
+      setAnchorIdx('');
+      setLeftIdx('');
+      setRightIdx('');
+    }
+  }, [assetType]);
 
   const handleClose = () => {
     if (!uploading) {
@@ -126,6 +165,95 @@ function AssetUpload({ isOpen, onClose, onUpload }: AssetUploadProps) {
               <option value={AssetType.STICKER}>Sticker</option>
             </select>
           </div>
+
+          {/* Filter Properties (only shown when type is filter) */}
+          {assetType === AssetType.FILTER && (
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Filter Properties</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* Filter Type */}
+                <div className="space-y-2">
+                  <Label htmlFor="filterType">Filter Type</Label>
+                  <Input
+                    id="filterType"
+                    type="text"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    placeholder="e.g. cute, cool, poetic"
+                    disabled={uploading}
+                  />
+                </div>
+
+                {/* Scale */}
+                <div className="space-y-2">
+                  <Label htmlFor="scale">Scale</Label>
+                  <Input
+                    id="scale"
+                    type="number"
+                    step="0.1"
+                    value={scale}
+                    onChange={(e) => setScale(e.target.value)}
+                    placeholder="e.g. 2.5"
+                    disabled={uploading}
+                  />
+                </div>
+
+                {/* Offset Y */}
+                <div className="space-y-2">
+                  <Label htmlFor="offsetY">Offset Y</Label>
+                  <Input
+                    id="offsetY"
+                    type="number"
+                    step="0.1"
+                    value={offsetY}
+                    onChange={(e) => setOffsetY(e.target.value)}
+                    placeholder="e.g. -100"
+                    disabled={uploading}
+                  />
+                </div>
+
+                {/* Anchor Index */}
+                <div className="space-y-2">
+                  <Label htmlFor="anchorIdx">Anchor Index</Label>
+                  <Input
+                    id="anchorIdx"
+                    type="number"
+                    value={anchorIdx}
+                    onChange={(e) => setAnchorIdx(e.target.value)}
+                    placeholder="e.g. 10"
+                    disabled={uploading}
+                  />
+                </div>
+
+                {/* Left Index */}
+                <div className="space-y-2">
+                  <Label htmlFor="leftIdx">Left Index</Label>
+                  <Input
+                    id="leftIdx"
+                    type="number"
+                    value={leftIdx}
+                    onChange={(e) => setLeftIdx(e.target.value)}
+                    placeholder="e.g. 10"
+                    disabled={uploading}
+                  />
+                </div>
+
+                {/* Right Index */}
+                <div className="space-y-2">
+                  <Label htmlFor="rightIdx">Right Index</Label>
+                  <Input
+                    id="rightIdx"
+                    type="number"
+                    value={rightIdx}
+                    onChange={(e) => setRightIdx(e.target.value)}
+                    placeholder="e.g. 10"
+                    disabled={uploading}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* File Upload Area */}
           <div className="space-y-2">

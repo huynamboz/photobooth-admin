@@ -19,7 +19,7 @@ function PhotoboothForm({ isOpen, onClose, onSubmit, photobooth, loading = false
     name: '',
     description: '',
     location: '',
-    status: 'AVAILABLE' as PhotoboothStatus,
+    status: 'available' as PhotoboothStatus,
   });
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function PhotoboothForm({ isOpen, onClose, onSubmit, photobooth, loading = false
         name: '',
         description: '',
         location: '',
-        status: 'AVAILABLE',
+        status: 'available',
       });
     }
   }, [photobooth, isOpen]);
@@ -103,10 +103,10 @@ function PhotoboothForm({ isOpen, onClose, onSubmit, photobooth, loading = false
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="AVAILABLE">Available</SelectItem>
-                <SelectItem value="BUSY">Busy</SelectItem>
-                <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                <SelectItem value="OFFLINE">Offline</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="busy">Busy</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
               </SelectContent>
             </Select>
           </div>

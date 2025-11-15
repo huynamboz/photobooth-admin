@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { type Photobooth, type PhotoboothStatus } from "@/types/photobooth";
+import { type Session } from "@/types/session";
+import { sessionService } from "@/services/sessionService";
 import { 
   MoreHorizontal, 
   Edit, 
@@ -26,7 +28,8 @@ import {
   Eye, 
   MapPin, 
   Clock,
-  Activity
+  Activity,
+  User
 } from "lucide-react";
 
 interface PhotoboothCardProps {
@@ -43,6 +46,8 @@ function PhotoboothCard({
   onViewDetails 
 }: PhotoboothCardProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [loadingSession, setLoadingSession] = useState(false);
 
   const getStatusColor = (status: PhotoboothStatus) => {
     switch (status) {
@@ -82,6 +87,28 @@ function PhotoboothCard({
       minute: '2-digit'
     });
   };
+
+  // Fetch current session details when currentSessionId changes
+  useEffect(() => {
+    const fetchCurrentSession = async () => {
+      if (photobooth.currentSessionId) {
+        setLoadingSession(true);
+        try {
+          const session = await sessionService.getSessionById(photobooth.currentSessionId);
+          setCurrentSession(session);
+        } catch (error) {
+          console.error('Failed to fetch current session:', error);
+          setCurrentSession(null);
+        } finally {
+          setLoadingSession(false);
+        }
+      } else {
+        setCurrentSession(null);
+      }
+    };
+
+    fetchCurrentSession();
+  }, [photobooth.currentSessionId]);
 
 
   return (
@@ -145,9 +172,51 @@ function PhotoboothCard({
             )}
 
             {photobooth.currentSessionId && (
-              <div className="flex items-center space-x-2 text-sm text-blue-600">
-                <Activity className="h-4 w-4" />
-                <span>Session: {photobooth.currentSessionId.slice(-8)}</span>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-sm text-blue-600">
+                  <Activity className="h-4 w-4" />
+                  <span>Active Session: #{photobooth.currentSessionId.slice(-8)}</span>
+                </div>
+                
+                {loadingSession ? (
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+                    <span>Loading session details...</span>
+                  </div>
+                ) : currentSession ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <User className="h-3 w-3" />
+                      <span>
+                        {currentSession.user ? (
+                          <>
+                            {currentSession.user.name || 'Unknown User'} 
+                            {currentSession.user.email && (
+                              <span className="text-gray-500"> ({currentSession.user.email})</span>
+                            )}
+                          </>
+                        ) : (
+                          'No user assigned'
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {currentSession.photoCount}/{currentSession.maxPhotos} photos
+                      </span>
+                    </div>
+                    {currentSession.notes && (
+                      <div className="text-xs text-gray-500 italic">
+                        "{currentSession.notes}"
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 pl-6">
+                    Failed to load session details
+                  </div>
+                )}
               </div>
             )}
 

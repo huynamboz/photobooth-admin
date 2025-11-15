@@ -34,6 +34,7 @@ interface SessionActions {
   completeSession: (id: string) => Promise<void>;
   uploadPhoto: (sessionId: string, file: File, caption?: string) => Promise<void>;
   clearSessionFromPhotobooth: (photoboothId: string) => Promise<void>;
+  startCapture: (sessionId: string) => Promise<void>;
   
   
   // Filters and UI
@@ -239,6 +240,20 @@ export const useSessionStore = create<SessionStore>((set) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to clear session from photobooth',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  startCapture: async (sessionId: string) => {
+    set({ loading: true, error: null });
+    try {
+      await sessionService.startCapture(sessionId);
+      set({ loading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to start capture',
         loading: false 
       });
       throw error;

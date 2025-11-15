@@ -29,6 +29,7 @@ function SessionsPage() {
     completeSession,
     uploadPhoto,
     clearSessionFromPhotobooth,
+    startCapture,
     setFilters,
     clearFilters,
     clearError
@@ -123,6 +124,15 @@ function SessionsPage() {
       loadSessions();
     } catch {
       toast.error('Failed to clear session from photobooth');
+    }
+  };
+
+  const handleStartCapture = async (sessionId: string) => {
+    try {
+      await startCapture(sessionId);
+      toast.success('Capture started successfully');
+    } catch {
+      toast.error('Failed to start capture');
     }
   };
 
@@ -294,6 +304,7 @@ function SessionsPage() {
                 onViewDetails={handleViewDetails}
                 onUploadPhoto={handleUploadPhoto}
                 onClearSession={handleClearSession}
+                onStartCapture={handleStartCapture}
               />
 
               {/* Pagination */}

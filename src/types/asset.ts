@@ -9,17 +9,38 @@ export interface Asset {
   imageUrl: string;
   publicId?: string;
   type: AssetType;
+  // Filter properties (only for type="filter")
+  filterType?: string | null;
+  scale?: number;
+  offset_y?: number;
+  anchor_idx?: number;
+  left_idx?: number;
+  right_idx?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateAssetRequest {
   type: AssetType;
+  // Filter properties (only for type="filter")
+  filterType?: string | null;
+  scale?: number;
+  offset_y?: number;
+  anchor_idx?: number;
+  left_idx?: number;
+  right_idx?: number;
 }
 
 export interface UploadAssetRequest {
   file: File;
   type: AssetType;
+  // Filter properties (only for type="filter")
+  filterType?: string | null;
+  scale?: number;
+  offset_y?: number;
+  anchor_idx?: number;
+  left_idx?: number;
+  right_idx?: number;
 }
 
 export interface AssetResponse {
@@ -27,8 +48,25 @@ export interface AssetResponse {
   imageUrl: string;
   publicId?: string;
   type: AssetType;
+  // Filter properties (only for type="filter")
+  filterType?: string | null;
+  scale?: number;
+  offset_y?: number;
+  anchor_idx?: number;
+  left_idx?: number;
+  right_idx?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UpdateAssetRequest {
+  // Filter properties (only for type="filter")
+  filterType?: string | null;
+  scale?: number;
+  offset_y?: number;
+  anchor_idx?: number;
+  left_idx?: number;
+  right_idx?: number;
 }
 
 export interface DeleteAssetResponse {

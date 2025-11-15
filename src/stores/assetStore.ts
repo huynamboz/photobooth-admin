@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { assetService } from '../services/assetService';
-import { type Asset, type CreateAssetRequest, type UploadAssetRequest, type AssetFilters, type GetAssetsParams } from '../types/asset';
+import { type Asset, type CreateAssetRequest, type UploadAssetRequest, type UpdateAssetRequest, type AssetFilters, type GetAssetsParams } from '../types/asset';
 import { type PaginationMeta } from '../types/pagination';
 
 interface AssetState {
@@ -23,6 +23,7 @@ interface AssetActions {
   // CRUD operations
   uploadAsset: (uploadData: UploadAssetRequest) => Promise<void>;
   createAsset: (assetData: CreateAssetRequest) => Promise<void>;
+  updateAsset: (id: string, assetData: UpdateAssetRequest) => Promise<void>;
   deleteAsset: (id: string) => Promise<void>;
   
   // Filtering and search
@@ -156,6 +157,24 @@ export const useAssetStore = create<AssetStore>((set) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to create asset',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  updateAsset: async (id: string, assetData: UpdateAssetRequest) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedAsset = await assetService.updateAsset(id, assetData);
+      set(state => ({
+        assets: state.assets.map(asset => asset.id === id ? updatedAsset as Asset : asset),
+        selectedAsset: state.selectedAsset?.id === id ? updatedAsset as Asset : state.selectedAsset,
+        loading: false
+      }));
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to update asset',
         loading: false 
       });
       throw error;

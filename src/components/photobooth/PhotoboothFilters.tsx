@@ -46,10 +46,10 @@ function PhotoboothFiltersComponent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="AVAILABLE">Available</SelectItem>
-              <SelectItem value="BUSY">Busy</SelectItem>
-              <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-              <SelectItem value="OFFLINE">Offline</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="busy">Busy</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
         </div>

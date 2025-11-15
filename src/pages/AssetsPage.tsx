@@ -17,10 +17,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAssetStore } from "@/stores/assetStore";
 import { type Asset, AssetType, type UploadAssetRequest, type GetAssetsParams } from "@/types/asset";
 import Layout from "../components/Layout";
 import AssetUpload from "../components/AssetUpload";
+import AssetEditFilter from "../components/AssetEditFilter";
 import PaginationWrapper from "../components/PaginationWrapper";
 import { 
   Plus, 
@@ -31,7 +38,10 @@ import {
   Image as ImageIcon,
   Frame,
   Palette,
-  Sticker
+  Sticker,
+  Download,
+  Eye,
+  Edit
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +54,7 @@ function AssetsPage() {
     filters,
     fetchAssets,
     uploadAsset,
+    updateAsset,
     deleteAsset,
     setFilters,
     clearFilters,
@@ -52,7 +63,10 @@ function AssetsPage() {
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [isEditFilterOpen, setIsEditFilterOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
@@ -103,9 +117,51 @@ function AssetsPage() {
     }
   };
 
+  const handleUpdateFilter = async (assetId: string, filterData: {
+    filterType?: string | null;
+    scale?: number;
+    offset_y?: number;
+    anchor_idx?: number;
+    left_idx?: number;
+    right_idx?: number;
+  }) => {
+    await updateAsset(assetId, filterData);
+    loadAssets(); // Refresh the list
+  };
+
+  const openEditFilter = (asset: Asset) => {
+    if (asset.type === 'filter') {
+      setSelectedAsset(asset);
+      setIsEditFilterOpen(true);
+    }
+  };
+
   const openDeleteDialog = (asset: Asset) => {
     setSelectedAsset(asset);
     setIsDeleteOpen(true);
+  };
+
+  const openImageViewer = (asset: Asset) => {
+    setSelectedAsset(asset);
+    setSelectedImage(asset.imageUrl);
+    setIsImageViewerOpen(true);
+  };
+
+  const closeImageViewer = () => {
+    setIsImageViewerOpen(false);
+    setSelectedImage(null);
+    setSelectedAsset(null);
+  };
+
+  const handleDownloadImage = (imageUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Image download started');
   };
 
   const getAssetIcon = (type: AssetType) => {
@@ -235,7 +291,10 @@ function AssetsPage() {
                 {assets.map((asset) => (
                   <div key={asset.id} className="group relative bg-gray-50 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                     {/* Asset Image */}
-                    <div className="aspect-square relative">
+                    <div 
+                      className="aspect-square relative cursor-pointer"
+                      onClick={() => openImageViewer(asset)}
+                    >
                       <img
                         src={asset.imageUrl}
                         alt={`${asset.type} asset`}
@@ -244,27 +303,71 @@ function AssetsPage() {
                       />
                       
                       {/* Overlay with Actions */}
-                      <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              onClick={() => openDeleteDialog(asset)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="absolute inset-0 bg-black/20 bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openImageViewer(asset);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openImageViewer(asset);
+                                }}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Full Size
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownloadImage(asset.imageUrl, `${asset.type}-${asset.id.slice(-8)}.jpg`);
+                                }}
+                              >
+                                <Download className="mr-2 h-4 w-4" />
+                                Download
+                              </DropdownMenuItem>
+                              {asset.type === 'filter' && (
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditFilter(asset);
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Filter
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteDialog(asset);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </div>
 
@@ -303,6 +406,74 @@ function AssetsPage() {
           onClose={() => setIsUploadOpen(false)}
           onUpload={handleUploadAsset}
         />
+
+        {/* Edit Filter Dialog */}
+        <AssetEditFilter
+          isOpen={isEditFilterOpen}
+          onClose={() => {
+            setIsEditFilterOpen(false);
+            setSelectedAsset(null);
+          }}
+          asset={selectedAsset}
+          onUpdate={handleUpdateFilter}
+          loading={loading}
+        />
+
+        {/* Image Viewer Dialog */}
+        <Dialog open={isImageViewerOpen} onOpenChange={closeImageViewer}>
+          <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {selectedAsset && getAssetIcon(selectedAsset.type)}
+                  <span>
+                    {selectedAsset ? `${selectedAsset.type.charAt(0).toUpperCase() + selectedAsset.type.slice(1)} Asset` : 'Image Preview'}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {selectedAsset && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadImage(selectedAsset.imageUrl, `${selectedAsset.type}-${selectedAsset.id.slice(-8)}.jpg`)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  )}
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              {selectedImage && (
+                <img
+                  src={selectedImage}
+                  alt="Asset preview"
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                />
+              )}
+            </div>
+            {selectedAsset && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Type:</span>
+                    <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAssetTypeColor(selectedAsset.type)}`}>
+                      {getAssetIcon(selectedAsset.type)}
+                      <span className="ml-1 capitalize">{selectedAsset.type}</span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Created:</span>
+                    <span className="ml-2 text-gray-600">
+                      {new Date(selectedAsset.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

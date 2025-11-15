@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
   MapPin, 
   Calendar, 
   Image as ImageIcon,
-  X,
   Download,
   Eye
 } from "lucide-react";
@@ -21,10 +20,9 @@ interface SessionDetailProps {
   isOpen: boolean;
   onClose: () => void;
   session: Session | null;
-  loading?: boolean;
 }
 
-function SessionDetail({ isOpen, onClose, session, loading = false }: SessionDetailProps) {
+function SessionDetail({ isOpen, onClose, session }: SessionDetailProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {

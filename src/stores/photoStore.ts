@@ -1,108 +1,80 @@
 import { create } from 'zustand';
-import { photoService, type GetPhotosParams, type UpdatePhotoRequest } from '../services/photoService';
-import { type Photo } from '../types/session';
-import { type PaginationMeta } from '../types/pagination';
+import { photoService } from '@/services/photoService';
+import { type Photo, type GetPhotosParams, type PaginatedPhotoResponse } from '@/types/photo';
 
 interface PhotoFilters {
   sessionId?: string;
   isProcessed?: boolean;
   dateFrom?: string;
   dateTo?: string;
-  search?: string;
 }
 
-interface PhotoState {
+interface PhotoStore {
+  // State
   photos: Photo[];
-  pagination: PaginationMeta | null;
+  selectedPhoto: Photo | null;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  } | null;
   loading: boolean;
   error: string | null;
   filters: PhotoFilters;
-  selectedPhotos: string[];
-  selectedPhoto: Photo | null;
-}
 
-interface PhotoActions {
-  // Data fetching
+  // Actions
   fetchPhotos: (params?: GetPhotosParams) => Promise<void>;
-  fetchPhotoById: (id: string) => Promise<void>;
-  
-  // CRUD operations
-  updatePhoto: (id: string, photoData: UpdatePhotoRequest) => Promise<void>;
+  getPhotoById: (id: string) => Promise<void>;
   deletePhoto: (id: string) => Promise<void>;
-  bulkUpdatePhotos: (photoIds: string[], updates: UpdatePhotoRequest) => Promise<void>;
-  bulkDeletePhotos: (photoIds: string[]) => Promise<void>;
-  
-  // Selection and UI
-  setSelectedPhotos: (photoIds: string[]) => void;
-  togglePhotoSelection: (photoId: string) => void;
-  clearSelection: () => void;
-  setSelectedPhoto: (photo: Photo | null) => void;
-  
-  // Filters
+  updatePhotoCaption: (id: string, caption: string) => Promise<void>;
+  markPhotoAsProcessed: (id: string) => Promise<void>;
+  downloadPhoto: (id: string) => Promise<void>;
   setFilters: (filters: Partial<PhotoFilters>) => void;
   clearFilters: () => void;
-  
-  // Error handling
-  setError: (error: string | null) => void;
   clearError: () => void;
+  setSelectedPhoto: (photo: Photo | null) => void;
 }
 
-type PhotoStore = PhotoState & PhotoActions;
-
-export const usePhotoStore = create<PhotoStore>((set) => ({
+export const usePhotoStore = create<PhotoStore>((set, get) => ({
   // Initial state
   photos: [],
+  selectedPhoto: null,
   pagination: null,
   loading: false,
   error: null,
   filters: {},
-  selectedPhotos: [],
-  selectedPhoto: null,
 
   // Actions
-  fetchPhotos: async (params?: GetPhotosParams) => {
+  fetchPhotos: async (params: GetPhotosParams = {}) => {
     set({ loading: true, error: null });
     try {
-      const response = await photoService.getAllPhotos(params);
-      set({ 
-        photos: response.data, 
+      const response = await photoService.getPhotos(params);
+      set({
+        photos: response.data,
         pagination: response.meta,
-        loading: false 
+        loading: false
       });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to fetch photos',
-        loading: false 
+        loading: false
       });
+      throw error;
     }
   },
 
-  fetchPhotoById: async (id: string) => {
+  getPhotoById: async (id: string) => {
     set({ loading: true, error: null });
     try {
       const photo = await photoService.getPhotoById(id);
       set({ selectedPhoto: photo, loading: false });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to fetch photo',
-        loading: false 
-      });
-    }
-  },
-
-  updatePhoto: async (id: string, photoData: UpdatePhotoRequest) => {
-    set({ loading: true, error: null });
-    try {
-      const updatedPhoto = await photoService.updatePhoto(id, photoData);
-      set(state => ({
-        photos: state.photos.map(p => p.id === id ? updatedPhoto : p),
-        selectedPhoto: state.selectedPhoto?.id === id ? updatedPhoto : state.selectedPhoto,
         loading: false
-      }));
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to update photo',
-        loading: false 
       });
       throw error;
     }
@@ -113,84 +85,76 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
     try {
       await photoService.deletePhoto(id);
       set(state => ({
-        photos: state.photos.filter(p => p.id !== id),
-        selectedPhotos: state.selectedPhotos.filter(pid => pid !== id),
+        photos: state.photos.filter(photo => photo.id !== id),
         selectedPhoto: state.selectedPhoto?.id === id ? null : state.selectedPhoto,
         loading: false
       }));
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to delete photo',
-        loading: false 
+        loading: false
       });
       throw error;
     }
   },
 
-  bulkUpdatePhotos: async (photoIds: string[], updates: UpdatePhotoRequest) => {
+  updatePhotoCaption: async (id: string, caption: string) => {
     set({ loading: true, error: null });
     try {
-      await photoService.bulkUpdatePhotos(photoIds, updates);
+      const updatedPhoto = await photoService.updatePhotoCaption(id, caption);
       set(state => ({
-        photos: state.photos.map(p => 
-          photoIds.includes(p.id) 
-            ? { ...p, ...updates, updatedAt: new Date().toISOString() }
-            : p
+        photos: state.photos.map(photo => 
+          photo.id === id ? updatedPhoto : photo
         ),
-        selectedPhotos: [],
+        selectedPhoto: state.selectedPhoto?.id === id ? updatedPhoto : state.selectedPhoto,
         loading: false
       }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to update photos',
-        loading: false 
+      set({
+        error: error instanceof Error ? error.message : 'Failed to update photo caption',
+        loading: false
       });
       throw error;
     }
   },
 
-  bulkDeletePhotos: async (photoIds: string[]) => {
+  markPhotoAsProcessed: async (id: string) => {
     set({ loading: true, error: null });
     try {
-      await photoService.bulkDeletePhotos(photoIds);
+      const updatedPhoto = await photoService.markPhotoAsProcessed(id);
       set(state => ({
-        photos: state.photos.filter(p => !photoIds.includes(p.id)),
-        selectedPhotos: [],
-        selectedPhoto: state.selectedPhoto && photoIds.includes(state.selectedPhoto.id) ? null : state.selectedPhoto,
+        photos: state.photos.map(photo => 
+          photo.id === id ? updatedPhoto : photo
+        ),
+        selectedPhoto: state.selectedPhoto?.id === id ? updatedPhoto : state.selectedPhoto,
         loading: false
       }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete photos',
-        loading: false 
+      set({
+        error: error instanceof Error ? error.message : 'Failed to mark photo as processed',
+        loading: false
       });
       throw error;
     }
   },
 
-  setSelectedPhotos: (photoIds: string[]) => {
-    set({ selectedPhotos: photoIds });
+  downloadPhoto: async (id: string) => {
+    set({ loading: true, error: null });
+    try {
+      await photoService.downloadPhoto(id);
+      set({ loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to download photo',
+        loading: false
+      });
+      throw error;
+    }
   },
 
-  togglePhotoSelection: (photoId: string) => {
+  setFilters: (newFilters: Partial<PhotoFilters>) => {
     set(state => ({
-      selectedPhotos: state.selectedPhotos.includes(photoId)
-        ? state.selectedPhotos.filter(id => id !== photoId)
-        : [...state.selectedPhotos, photoId]
-    }));
-  },
-
-  clearSelection: () => {
-    set({ selectedPhotos: [] });
-  },
-
-  setSelectedPhoto: (photo: Photo | null) => {
-    set({ selectedPhoto: photo });
-  },
-
-  setFilters: (filters: Partial<PhotoFilters>) => {
-    set(state => ({
-      filters: { ...state.filters, ...filters }
+      filters: { ...state.filters, ...newFilters }
     }));
   },
 
@@ -198,11 +162,11 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
     set({ filters: {} });
   },
 
-  setError: (error: string | null) => {
-    set({ error });
-  },
-
   clearError: () => {
     set({ error: null });
   },
+
+  setSelectedPhoto: (photo: Photo | null) => {
+    set({ selectedPhoto: photo });
+  }
 }));
