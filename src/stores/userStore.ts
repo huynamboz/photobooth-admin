@@ -20,6 +20,7 @@ interface UserActions {
   createUser: (userData: CreateUserRequest) => Promise<void>;
   updateUser: (id: string, userData: UpdateUserRequest) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
+  addPoints: (id: string, points: number) => Promise<void>;
   
   // State management
   setSelectedUser: (user: User | null) => void;
@@ -118,6 +119,26 @@ export const useUserStore = create<UserStore>((set) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to delete user',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  addPoints: async (id: string, points: number) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedUser = await userService.addPoints(id, points);
+      set(state => ({
+        users: state.users.map(user => 
+          user.id === id ? { ...user, ...updatedUser } : user
+        ),
+        selectedUser: state.selectedUser?.id === id ? { ...state.selectedUser, ...updatedUser } : state.selectedUser,
+        loading: false
+      }));
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to add points',
         loading: false 
       });
       throw error;

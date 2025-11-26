@@ -5,7 +5,8 @@ import {
   type UpdateUserRequest, 
   type UserResponse, 
   type DeleteUserResponse,
-  type GetUsersParams
+  type GetUsersParams,
+  type AddPointsRequest
 } from '../types/user';
 import { type PaginatedResponse } from '../types/pagination';
 
@@ -28,6 +29,12 @@ class UserService {
 
   async deleteUser(id: string): Promise<DeleteUserResponse> {
     return apiClient.delete<DeleteUserResponse>(`/users/${id}`);
+  }
+
+  async addPoints(id: string, points: number): Promise<UserResponse> {
+    return apiClient.post<UserResponse>(`/admin/users/${id}/add-points`, {
+      points,
+    } as AddPointsRequest);
   }
 }
 

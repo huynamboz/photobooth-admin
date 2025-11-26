@@ -10,6 +10,7 @@ export interface User {
   name: string;
   phone?: string;
   address?: string;
+  points?: number;
   roleId?: string;
   role?: Role;
   createdAt: string;
@@ -55,4 +56,8 @@ export interface UserResponse {
 
 export interface DeleteUserResponse {
   message: string;
+}
+
+export interface AddPointsRequest {
+  points: number;
 }

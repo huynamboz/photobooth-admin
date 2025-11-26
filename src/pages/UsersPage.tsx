@@ -30,8 +30,9 @@ import { type User, type CreateUserRequest, type UpdateUserRequest, type GetUser
 import Layout from "../components/Layout";
 import UserForm from "../components/UserForm";
 import PaginationWrapper from "../components/PaginationWrapper";
-import { Plus, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash2, Search, Coins } from "lucide-react";
 import { toast } from "sonner";
+import AddPointsDialog from "../components/AddPointsDialog";
 
 function UsersPage() {
   const {
@@ -43,12 +44,14 @@ function UsersPage() {
     createUser,
     updateUser,
     deleteUser,
+    addPoints,
     clearError
   } = useUserStore();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isAddPointsOpen, setIsAddPointsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,6 +122,25 @@ function UsersPage() {
     setIsDeleteOpen(true);
   };
 
+  const openAddPointsDialog = (user: User) => {
+    setSelectedUser(user);
+    setIsAddPointsOpen(true);
+  };
+
+  const handleAddPoints = async (points: number) => {
+    if (selectedUser) {
+      try {
+        await addPoints(selectedUser.id, points);
+        toast.success(`Successfully added ${points} points to ${selectedUser.name}`);
+        setIsAddPointsOpen(false);
+        setSelectedUser(null);
+        loadUsers(); // Refresh the list
+      } catch (error) {
+        toast.error('Failed to add points');
+      }
+    }
+  };
+
   return (
     <Layout>
       <div className="p-6">
@@ -160,6 +182,7 @@ function UsersPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>Points</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -168,7 +191,7 @@ function UsersPage() {
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8">
+                          <TableCell colSpan={7} className="text-center py-8">
                             <div className="flex items-center justify-center">
                               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                               <span className="ml-2">Loading users...</span>
@@ -177,7 +200,7 @@ function UsersPage() {
                         </TableRow>
                       ) : users.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                             {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                           </TableCell>
                         </TableRow>
@@ -187,6 +210,11 @@ function UsersPage() {
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone || '-'}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {user.points ?? 0}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {user.role?.name || 'user'}
@@ -206,6 +234,10 @@ function UsersPage() {
                               <DropdownMenuItem onClick={() => openEditDialog(user)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openAddPointsDialog(user)}>
+                                <Coins className="mr-2 h-4 w-4" />
+                                Add Points
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => openDeleteDialog(user)}
@@ -277,6 +309,18 @@ function UsersPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Add Points Dialog */}
+        <AddPointsDialog
+          isOpen={isAddPointsOpen}
+          onClose={() => {
+            setIsAddPointsOpen(false);
+            setSelectedUser(null);
+          }}
+          onSubmit={handleAddPoints}
+          user={selectedUser}
+          loading={loading}
+        />
       </div>
     </Layout>
   );
