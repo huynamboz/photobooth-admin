@@ -33,6 +33,7 @@ interface SessionActions {
   startSession: (id: string) => Promise<void>;
   completeSession: (id: string) => Promise<void>;
   uploadPhoto: (sessionId: string, file: File, caption?: string) => Promise<void>;
+  uploadMultiplePhotos: (sessionId: string, files: File[]) => Promise<{ message: string; photos: any[]; uploaded: number; failed: number }>;
   clearSessionFromPhotobooth: (photoboothId: string) => Promise<void>;
   startCapture: (sessionId: string) => Promise<void>;
   addFilter: (sessionId: string, filterId: string) => Promise<void>;
@@ -224,6 +225,39 @@ export const useSessionStore = create<SessionStore>((set) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to upload photo',
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  uploadMultiplePhotos: async (sessionId: string, files: File[]) => {
+    set({ loading: true, error: null });
+    try {
+      const result = await sessionService.uploadMultiplePhotos(sessionId, files);
+      set(state => ({
+        sessions: state.sessions.map(session => 
+          session.id === sessionId 
+            ? { 
+                ...session, 
+                photos: [...session.photos, ...result.photos],
+                photoCount: session.photoCount + result.uploaded
+              }
+            : session
+        ),
+        selectedSession: state.selectedSession?.id === sessionId 
+          ? {
+              ...state.selectedSession,
+              photos: [...state.selectedSession.photos, ...result.photos],
+              photoCount: state.selectedSession.photoCount + result.uploaded
+            }
+          : state.selectedSession,
+        loading: false
+      }));
+      return result;
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to upload photos',
         loading: false 
       });
       throw error;

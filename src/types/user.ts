@@ -11,6 +11,7 @@ export interface User {
   phone?: string;
   address?: string;
   points?: number;
+  paymentCode?: string;
   roleId?: string;
   role?: Role;
   createdAt: string;

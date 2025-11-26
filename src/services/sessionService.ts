@@ -77,6 +77,26 @@ class SessionService {
     return this.addPhotoToSession(sessionId, imageUrl, publicId, caption);
   }
 
+  // Upload multiple images to session
+  async uploadMultiplePhotos(sessionId: string, files: File[]): Promise<{ message: string; photos: Photo[]; uploaded: number; failed: number }> {
+    const formData = new FormData();
+    
+    // Append all files to FormData with field name "images"
+    files.forEach((file) => {
+      formData.append('images', file);
+    });
+    
+    return apiClient.post<{ message: string; photos: Photo[]; uploaded: number; failed: number }>(
+      `/photobooth/sessions/${sessionId}/photos/upload-multiple`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+  }
+
   // Admin operation: Start capture for a session
   async startCapture(sessionId: string): Promise<void> {
     return apiClient.post<void>(`/photobooth/sessions/${sessionId}/start-capture`);

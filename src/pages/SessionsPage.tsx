@@ -30,6 +30,7 @@ function SessionsPage() {
     startSession,
     completeSession,
     uploadPhoto,
+    uploadMultiplePhotos,
     clearSessionFromPhotobooth,
     startCapture,
     addFilter,
@@ -161,6 +162,21 @@ function SessionsPage() {
       loadSessions();
     } catch {
       toast.error('Failed to upload photo');
+    }
+  };
+
+  const handleMultiplePhotoUpload = async (files: File[]) => {
+    if (!selectedSession) return;
+    
+    try {
+      const result = await uploadMultiplePhotos(selectedSession.id, files);
+      toast.success(`Successfully uploaded ${result.uploaded} photo${result.uploaded > 1 ? 's' : ''}`);
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} photo(s) failed to upload`);
+      }
+      loadSessions();
+    } catch {
+      toast.error('Failed to upload photos');
     }
   };
 
@@ -368,6 +384,7 @@ function SessionsPage() {
             isOpen={isPhotoUploadOpen}
             onClose={handlePhotoUploadClose}
             onUpload={handlePhotoUpload}
+            onUploadMultiple={handleMultiplePhotoUpload}
             sessionId={selectedSession?.id || ''}
             loading={loading}
           />
